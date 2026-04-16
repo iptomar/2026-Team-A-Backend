@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose'); // Importar o Mongoose
 const authRoutes = require('./routes/auth');
+const formsRoutes = require('./routes/forms');
 
 const app = express();
 
@@ -23,6 +24,7 @@ mongoose.connect(mongoURI)
 
 // Rotas
 app.use('/auth', authRoutes);
+app.use('/forms', formsRoutes);
 
 // Rota de teste para verificar se o servidor está online
 app.get('/', (req, res) => {
