@@ -5,12 +5,13 @@ const mongoose = require("mongoose"); // Importar o Mongoose
 const authRoutes = require("./routes/auth");
 const formulariosRoutes = require("./routes/formularios");
 
+const formRoutes = require("./routes/forms");
+
 const app = express();
 
 // Middlewares base
 app.use(cors()); // Permite que o Frontend React aceda à API
 app.use(express.json()); // Permite ler JSON no corpo das requisições
-app.use("/forms", formRoutes);
 
 // 1. Configurar a ligação ao MongoDB
 // A URI deve estar no teu ficheiro .env para segurança
@@ -25,8 +26,9 @@ mongoose
   });
 
 // Rotas
-app.use("/auth", authRoutes);
 app.use("/api/formularios", formulariosRoutes);
+app.use("/auth", authRoutes);
+app.use("/forms", formRoutes);
 
 // Rota de teste para verificar se o servidor está online
 app.get("/", (req, res) => {
