@@ -4,6 +4,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const authRoutes = require("./routes/auth");
 const formRoutes = require("./routes/forms");
+const submissaoRoutes = require("./routes/submissoes");
 
 const app = express();
 
@@ -23,6 +24,7 @@ mongoose
 // Rotas
 app.use("/api/auth", authRoutes);
 app.use("/api/forms", formRoutes);
+app.use("/api/submissoes", submissaoRoutes);
 
 app.get("/", (req, res) => {
   res.send("Backend Online - 2026 Team A com MongoDB");
