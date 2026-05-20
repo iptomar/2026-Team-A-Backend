@@ -39,7 +39,7 @@ router.get('/todos', auth, async (req, res) => {
   try {
     const pedidos = await Submissao.find()
       .populate('professor', 'email')
-      .sort({ dataSubmissao: -1 });
+      .sort({ dataSubmissao: 1 });
     res.json(pedidos);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao procurar todos os pedidos.' });
