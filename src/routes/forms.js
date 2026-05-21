@@ -1,98 +1,77 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const Form = require("../models/Form");
-const auth = require("../middlewares/auth");
+const Form = require('../models/Form');
+const auth = require('../middlewares/auth');
 
-// Rota para listar todos os formulários
-router.get("/", async (req, res) => {
+// Listar todos os formulários
+router.get('/', async (req, res) => {
   try {
-    const formularios = await Form.find().sort({ dataCriacao: -1 });
-    res.json(formularios);
+    const forms = await Form.find().sort({ criadoEm: -1 });
+    res.json(forms);
   } catch (err) {
-    res.status(500).json({ error: "Erro ao procurar formulários." });
+    res.status(500).json({ error: 'Erro ao carregar formulários.' });
   }
 });
 
-// Rota para ir buscar um formulário específico
-router.get("/:id", async (req, res) => {
+// Obter um formulário específico
+router.get('/:id', async (req, res) => {
   try {
-    const formulario = await Form.findById(req.params.id);
-    if (!formulario) {
-      return res.status(404).json({ error: "Formulário não encontrado" });
-    }
-    res.json(formulario);
+    const form = await Form.findById(req.params.id);
+    if (!form) return res.status(404).json({ error: 'Formulário não encontrado.' });
+    res.json(form);
   } catch (err) {
-    res.status(500).json({ error: "Erro ao procurar o formulário." });
+    res.status(500).json({ error: 'Erro ao carregar o formulário.' });
   }
 });
 
-// Rota para criar (Rascunho) ou publicar formulário
-router.post("/", auth, async (req, res) => {
+// Criar um novo formulário
+router.post('/', auth, async (req, res) => {
   try {
-    const { titulo, descricao, estado, campos } = req.body;
-
-    // Validação extra no servidor
-    if (estado === "Publicado" && (!campos || campos.length === 0)) {
-      return res
-        .status(400)
-        .json({ error: "Não é possível publicar sem campos." });
-    }
-
-    const novoForm = await Form.create({ titulo, descricao, estado, campos });
-    res.status(201).json(novoForm);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao guardar o formulário." });
-  }
-});
-
-// Rota para atualizar um formulário
-router.put("/:id", auth, async (req, res) => {
-  try {
-    const formAtual = await Form.findById(req.params.id);
+    const { titulo, descricao, estado, campos, corPrincipal, logo } = req.body;
     
-    if (!formAtual) {
-      return res.status(404).json({ error: "Formulário não encontrado" });
-    }
-
-    // Proteção: Rejeita se estiver Publicado
-    if (formAtual.estado === "Publicado") {
-      return res.status(403).json({ 
-        error: "Não é possível alterar um formulário já publicado." 
-      });
-    }
-
-    const formAtualizado = await Form.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    const newForm = await Form.create({
+      titulo,
+      descricao,
+      estado,
+      campos,
+      corPrincipal,
+      logo,
+      criadoPor: req.userId
+    });
     
-    res.json(formAtualizado);
+    res.status(201).json(newForm);
   } catch (err) {
-    res.status(500).json({ error: "Erro ao atualizar o formulário." });
+    res.status(500).json({ error: 'Erro ao criar o formulário.' });
   }
 });
 
-// Rota para apagar um formulário
-router.delete("/:id", auth, async (req, res) => {
+// Atualizar um formulário
+router.put('/:id', auth, async (req, res) => {
+    try {
+      const { titulo, descricao, estado, campos, corPrincipal, logo } = req.body;
+      
+      const form = await Form.findByIdAndUpdate(
+        req.params.id,
+        { titulo, descricao, estado, campos, corPrincipal, logo },
+        { new: true }
+      );
+      
+      if (!form) return res.status(404).json({ error: 'Formulário não encontrado.' });
+      
+      res.json(form);
+    } catch (err) {
+      res.status(500).json({ error: 'Erro ao atualizar o formulário.' });
+    }
+  });
+
+// Eliminar um formulário
+router.delete('/:id', auth, async (req, res) => {
   try {
-    const formAtual = await Form.findById(req.params.id);
-    
-    if (!formAtual) {
-      return res.status(404).json({ error: "Formulário não encontrado" });
-    }
-
-    if (formAtual.estado === "Publicado") {
-      return res.status(403).json({ 
-        error: "Não é possível apagar um formulário publicado." 
-      });
-    }
-
-    await Form.findByIdAndDelete(req.params.id);
-    res.json({ message: "Formulário apagado com sucesso" });
+    const form = await Form.findByIdAndDelete(req.params.id);
+    if (!form) return res.status(404).json({ error: 'Formulário não encontrado.' });
+    res.json({ message: 'Formulário eliminado com sucesso.' });
   } catch (err) {
-    res.status(500).json({ error: "Erro ao apagar o formulário." });
+    res.status(500).json({ error: 'Erro ao eliminar o formulário.' });
   }
 });
 

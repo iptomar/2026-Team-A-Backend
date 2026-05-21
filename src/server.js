@@ -1,10 +1,10 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const mongoose = require("mongoose");
-const authRoutes = require("./routes/auth");
-const formRoutes = require("./routes/forms");
-const submissaoRoutes = require("./routes/submissoes");
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const mongoose = require('mongoose'); // Importar o Mongoose
+const authRoutes = require('./routes/auth');
+const formRoutes = require('./routes/forms');
+const settingsRoutes = require('./routes/settings');
 
 const app = express();
 
@@ -25,6 +25,7 @@ mongoose
 app.use("/api/auth", authRoutes);
 app.use("/api/forms", formRoutes);
 app.use("/api/submissoes", submissaoRoutes);
+app.use('/api/settings', settingsRoutes);
 
 app.get("/", (req, res) => {
   res.send("Backend Online - 2026 Team A com MongoDB");
