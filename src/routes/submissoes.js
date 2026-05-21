@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Submissao = require('../models/Submissao');
+const User = require('../models/User');
+const Formulario = require('../models/Formulario');
 const auth = require('../middlewares/auth');
 
 // Criar uma nova submissão
@@ -34,6 +36,24 @@ router.get('/meus', auth, async (req, res) => {
   }
 });
 
+// Listar todas as submissões (para Admin)
+router.get('/todos', auth, async (req, res) => {
+  try {
+    console.log('GET /api/submissoes/todos - Utilizador:', req.userId);
+    const pedidos = await Submissao.find()
+      .populate('professor', 'email')
+      .sort({ dataSubmissao: 1 });
+    console.log(`Encontradas ${pedidos.length} submissões.`);
+    res.json(pedidos);
+  } catch (error) {
+    console.error('ERRO CRÍTICO em /api/submissoes/todos:', error);
+    res.status(500).json({ 
+      error: 'Erro ao procurar todos os pedidos.',
+      details: error.message 
+    });
+  }
+});
+
 // Obter detalhes de uma submissão específica
 router.get('/:id', auth, async (req, res) => {
   try {
@@ -53,18 +73,6 @@ router.get('/:id', auth, async (req, res) => {
     res.json(submissao);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao carregar detalhes do pedido.' });
-  }
-});
-
-// Listar todas as submissões (para Admin)
-router.get('/todos', auth, async (req, res) => {
-  try {
-    const pedidos = await Submissao.find()
-      .populate('professor', 'email')
-      .sort({ dataSubmissao: 1 });
-    res.json(pedidos);
-  } catch (error) {
-    res.status(500).json({ error: 'Erro ao procurar todos os pedidos.' });
   }
 });
 

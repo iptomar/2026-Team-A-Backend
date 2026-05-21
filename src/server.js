@@ -4,6 +4,7 @@ const cors = require('cors');
 const mongoose = require('mongoose'); // Importar o Mongoose
 const authRoutes = require('./routes/auth');
 const formRoutes = require('./routes/forms');
+const formularioRoutes = require('./routes/formularios');
 const settingsRoutes = require('./routes/settings');
 const submissaoRoutes = require('./routes/submissoes');
 
@@ -25,6 +26,7 @@ mongoose
 // Rotas
 app.use("/api/auth", authRoutes);
 app.use("/api/forms", formRoutes);
+app.use("/api/formularios", formularioRoutes);
 app.use("/api/submissoes", submissaoRoutes);
 app.use('/api/settings', settingsRoutes);
 
