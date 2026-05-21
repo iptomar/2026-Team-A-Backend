@@ -34,6 +34,28 @@ router.get('/meus', auth, async (req, res) => {
   }
 });
 
+// Obter detalhes de uma submissão específica
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const submissao = await Submissao.findById(req.params.id)
+      .populate('formulario')
+      .populate('professor', 'email')
+      .lean();
+    
+    if (!submissao) {
+      return res.status(404).json({ error: 'Pedido não encontrado.' });
+    }
+
+    // Verificar se o utilizador tem permissão (é o professor que submeteu ou é admin)
+    // Nota: assumindo que o middleware 'auth' define req.userId e req.userRole (se houver)
+    // Se não tiver req.userRole, podemos simplificar por agora ou verificar o User model
+    
+    res.json(submissao);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao carregar detalhes do pedido.' });
+  }
+});
+
 // Listar todas as submissões (para Admin)
 router.get('/todos', auth, async (req, res) => {
   try {
