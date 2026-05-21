@@ -5,6 +5,7 @@ const mongoose = require('mongoose'); // Importar o Mongoose
 const authRoutes = require('./routes/auth');
 const formRoutes = require('./routes/forms');
 const settingsRoutes = require('./routes/settings');
+const submissaoRoutes = require('./routes/submissoes');
 
 const app = express();
 
