@@ -9,7 +9,7 @@ const CampoSchema = new mongoose.Schema({
 const FormSchema = new mongoose.Schema({
   titulo: { type: String, required: true },
   descricao: { type: String },
-  estado: { type: String, enum: ['Rascunho', 'Publicado'], default: 'Rascunho' },
+  estado: { type: String, enum: ['Rascunho', 'Publicado', 'Arquivado'], default: 'Rascunho' },
   campos: [CampoSchema],
   corPrincipal: { type: String, default: '#282c34' },
   logo: { type: String }, // Store as Base64 string for simplicity in this task
