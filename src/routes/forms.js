@@ -47,22 +47,29 @@ router.post('/', auth, async (req, res) => {
 
 // Atualizar um formulário
 router.put('/:id', auth, async (req, res) => {
-    try {
-      const { titulo, descricao, estado, campos, corPrincipal, logo } = req.body;
-      
-      const form = await Form.findByIdAndUpdate(
-        req.params.id,
-        { titulo, descricao, estado, campos, corPrincipal, logo },
-        { new: true }
-      );
-      
-      if (!form) return res.status(404).json({ error: 'Formulário não encontrado.' });
-      
-      res.json(form);
-    } catch (err) {
-      res.status(500).json({ error: 'Erro ao atualizar o formulário.' });
+  try {
+    const formAtual = await Form.findById(req.params.id);
+    if (!formAtual) return res.status(404).json({ error: 'Formulário não encontrado.' });
+
+    // Impede edição se estiver Publicado ou Arquivado
+    if (formAtual.estado === 'Publicado' || formAtual.estado === 'Arquivado') {
+      return res.status(403).json({ error: 'Não é possível editar formulários publicados ou arquivados.' });
     }
-  });
+    const { titulo, descricao, estado, campos, corPrincipal, logo } = req.body;
+
+    const form = await Form.findByIdAndUpdate(
+      req.params.id,
+      { titulo, descricao, estado, campos, corPrincipal, logo },
+      { new: true }
+    );
+
+    if (!form) return res.status(404).json({ error: 'Formulário não encontrado.' });
+
+    res.json(form);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao atualizar o formulário.' });
+  }
+});
 
 // Eliminar um formulário
 router.delete('/:id', auth, async (req, res) => {
@@ -72,6 +79,20 @@ router.delete('/:id', auth, async (req, res) => {
     res.json({ message: 'Formulário eliminado com sucesso.' });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao eliminar o formulário.' });
+  }
+});
+
+router.patch('/:id/arquivar', auth, async (req, res) => {
+  try {
+    const form = await Form.findByIdAndUpdate(
+      req.params.id,
+      { estado: 'Arquivado' },
+      { new: true }
+    );
+    if (!form) return res.status(404).json({ error: 'Formulário não encontrado.' });
+    res.json(form);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao arquivar o formulário.' });
   }
 });
 
