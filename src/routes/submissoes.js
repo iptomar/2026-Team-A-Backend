@@ -76,4 +76,30 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
+// Atualizar o estado de uma submissão (Aprovar/Rejeitar)
+router.patch('/:id/estado', auth, async (req, res) => {
+  try {
+    const { estado } = req.body;
+    
+    if (!['Aprovado', 'Rejeitado', 'Pendente'].includes(estado)) {
+      return res.status(400).json({ error: 'Estado inválido.' });
+    }
+
+    const submissao = await Submissao.findByIdAndUpdate(
+      req.params.id,
+      { estado },
+      { new: true }
+    ).populate('formulario').populate('professor', 'email');
+
+    if (!submissao) {
+      return res.status(404).json({ error: 'Pedido não encontrado.' });
+    }
+
+    res.json(submissao);
+  } catch (error) {
+    console.error('Erro ao atualizar estado:', error);
+    res.status(500).json({ error: 'Erro ao atualizar o estado do pedido.' });
+  }
+});
+
 module.exports = router;
