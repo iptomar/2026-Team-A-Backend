@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Formulario = require('../models/Formulario');
+const Submissao = require('../models/Submissao');
 const auth = require('../middlewares/auth'); 
 
 // Rota para APAGAR (DELETE)
@@ -20,7 +21,22 @@ router.delete('/:id', auth, async (req, res) => {
       });
     }
 
-    // 3. Se for Rascunho ou Inativo, prossegue com a remoção
+    // 3. NOVA PROTEÇÃO: Verificar se existem submissões pendentes
+    // Nota: Como Submissao agora aponta para 'Form', esta verificação pode não encontrar 
+    // nada se o utilizador estiver a usar o modelo legacy Formulario, 
+    // mas adicionamos para consistência.
+    const submissoesPendentes = await Submissao.countDocuments({ 
+      formulario: req.params.id, 
+      estado: 'Pendente' 
+    });
+
+    if (submissoesPendentes > 0) {
+      return res.status(400).json({ 
+        erro: `Não é possível apagar este formulário porque existem ${submissoesPendentes} pedido(s) pendente(s).` 
+      });
+    }
+
+    // 4. Se for Rascunho ou Inativo, prossegue com a remoção
     await Formulario.findByIdAndDelete(req.params.id);
     res.json({ mensagem: 'Formulário apagado com sucesso' });
 

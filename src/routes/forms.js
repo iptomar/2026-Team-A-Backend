@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Form = require('../models/Form');
+const Submissao = require('../models/Submissao');
 const auth = require('../middlewares/auth');
 
 // Listar todos os formulários
@@ -45,6 +46,33 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+// Clonar um formulário existente
+router.post('/:id/clonar', auth, async (req, res) => {
+  try {
+    const formOriginal = await Form.findById(req.params.id);
+    if (!formOriginal) {
+      return res.status(404).json({ error: 'Formulário original não encontrado.' });
+    }
+
+    // Criar um novo objeto baseado no original, mas com estado Rascunho e novo título
+    const novoForm = new Form({
+      titulo: `${formOriginal.titulo} (Cópia)`,
+      descricao: formOriginal.descricao,
+      estado: 'Rascunho',
+      campos: formOriginal.campos,
+      corPrincipal: formOriginal.corPrincipal,
+      logo: formOriginal.logo,
+      criadoPor: req.userId
+    });
+
+    await novoForm.save();
+    res.status(201).json(novoForm);
+  } catch (err) {
+    console.error('Erro ao clonar formulário:', err);
+    res.status(500).json({ error: 'Erro ao clonar o formulário.' });
+  }
+});
+
 // Atualizar um formulário
 router.put('/:id', auth, async (req, res) => {
   try {
@@ -74,10 +102,23 @@ router.put('/:id', auth, async (req, res) => {
 // Eliminar um formulário
 router.delete('/:id', auth, async (req, res) => {
   try {
+    // PROTEÇÃO: Verificar se existem submissões pendentes
+    const submissoesPendentes = await Submissao.countDocuments({ 
+      formulario: req.params.id, 
+      estado: 'Pendente' 
+    });
+
+    if (submissoesPendentes > 0) {
+      return res.status(400).json({ 
+        error: `Não é possível apagar este formulário porque existem ${submissoesPendentes} pedido(s) pendente(s).` 
+      });
+    }
+
     const form = await Form.findByIdAndDelete(req.params.id);
     if (!form) return res.status(404).json({ error: 'Formulário não encontrado.' });
     res.json({ message: 'Formulário eliminado com sucesso.' });
   } catch (err) {
+    console.error('Erro ao eliminar formulário:', err);
     res.status(500).json({ error: 'Erro ao eliminar o formulário.' });
   }
 });

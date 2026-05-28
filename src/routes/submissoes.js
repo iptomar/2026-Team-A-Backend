@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Submissao = require('../models/Submissao');
 const User = require('../models/User');
-const Formulario = require('../models/Formulario');
+const Form = require('../models/Form');
 const auth = require('../middlewares/auth');
 
 // Criar uma nova submissão

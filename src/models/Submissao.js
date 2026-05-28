@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const SubmissaoSchema = new mongoose.Schema({
   formulario: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Formulario',
+    ref: 'Form',
     required: true
   },
   professor: {
