@@ -54,6 +54,84 @@ router.get('/todos', auth, async (req, res) => {
   }
 });
 
+// Obter estatísticas globais (KPIs para Dashboards)
+router.get('/estatisticas', auth, async (req, res) => {
+  try {
+    const total = await Submissao.countDocuments();
+    const pendentes = await Submissao.countDocuments({ estado: 'Pendente' });
+    const aprovados = await Submissao.countDocuments({ estado: 'Aprovado' });
+    const rejeitados = await Submissao.countDocuments({ estado: 'Rejeitado' });
+
+    const taxaAprovacao = total > 0 ? ((aprovados / (aprovados + rejeitados || 1)) * 100).toFixed(1) : 0;
+
+    res.json({
+      total,
+      pendentes,
+      aprovados,
+      rejeitados,
+      taxaAprovacao: parseFloat(taxaAprovacao)
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao carregar estatísticas.' });
+  }
+});
+
+// Obter dados de ocupação real (salas e datas ocupadas)
+router.get('/ocupacao', auth, async (req, res) => {
+  try {
+    // Buscar todas as submissões que não foram rejeitadas
+    const submissoes = await Submissao.find({ estado: { $ne: 'Rejeitado' } })
+      .populate('formulario')
+      .lean();
+
+    const ocupacao = [];
+
+    submissoes.forEach(sub => {
+      if (!sub.formulario || !sub.formulario.campos) return;
+
+      // Identificar IDs dos campos de Sala e Data para esta submissão específica
+      const campoSala = sub.formulario.campos.find(c => 
+        c.etiqueta.toLowerCase().includes('sala') || c.etiqueta.toLowerCase().includes('room')
+      );
+      const campoData = sub.formulario.campos.find(c => c.tipo === 'Data');
+      
+      const campoInicio = sub.formulario.campos.find(c => 
+        c.etiqueta.toLowerCase().includes('início') || c.etiqueta.toLowerCase().includes('inicio') || c.etiqueta.toLowerCase().includes('entrada')
+      );
+      const campoFim = sub.formulario.campos.find(c => 
+        c.etiqueta.toLowerCase().includes('fim') || c.etiqueta.toLowerCase().includes('saída') || c.etiqueta.toLowerCase().includes('saida')
+      );
+
+      if (campoSala && campoData) {
+        const salaId = campoSala._id?.toString();
+        const dataId = campoData._id?.toString();
+        const inicioId = campoInicio?._id?.toString();
+        const fimId = campoFim?._id?.toString();
+
+        const salaValue = sub.respostas[salaId];
+        const dataValue = sub.respostas[dataId];
+        const inicioValue = inicioId ? sub.respostas[inicioId] : null;
+        const fimValue = fimId ? sub.respostas[fimId] : null;
+
+        if (salaValue && dataValue) {
+          ocupacao.push({
+            sala: salaValue,
+            data: dataValue,
+            inicio: inicioValue,
+            fim: fimValue,
+            pedidoId: sub._id
+          });
+        }
+      }
+    });
+
+    res.json(ocupacao);
+  } catch (error) {
+    console.error('Erro ao obter ocupação:', error);
+    res.status(500).json({ error: 'Erro ao processar ocupação das salas.' });
+  }
+});
+
 // Obter detalhes de uma submissão específica
 router.get('/:id', auth, async (req, res) => {
   try {

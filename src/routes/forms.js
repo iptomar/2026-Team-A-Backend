@@ -139,4 +139,48 @@ router.patch('/:id/arquivar', auth, async (req, res) => {
   }
 });
 
+// Reverter para Rascunho (Apenas Admin)
+router.patch('/:id/despublicar', auth, async (req, res) => {
+  try {
+    if (req.userRole !== 'admin') {
+      return res.status(403).json({ error: 'Apenas administradores podem reverter formulários para rascunho.' });
+    }
+
+    const form = await Form.findByIdAndUpdate(
+      req.params.id,
+      { estado: 'Rascunho' },
+      { new: true }
+    );
+
+    if (!form) return res.status(404).json({ error: 'Formulário não encontrado.' });
+    
+    res.json(form);
+  } catch (err) {
+    console.error('Erro ao despublicar formulário:', err);
+    res.status(500).json({ error: 'Erro ao reverter o formulário para rascunho.' });
+  }
+});
+
+// Publicar formulário (Apenas Admin)
+router.patch('/:id/publicar', auth, async (req, res) => {
+  try {
+    if (req.userRole !== 'admin') {
+      return res.status(403).json({ error: 'Apenas administradores podem publicar formulários.' });
+    }
+
+    const form = await Form.findByIdAndUpdate(
+      req.params.id,
+      { estado: 'Publicado' },
+      { new: true }
+    );
+
+    if (!form) return res.status(404).json({ error: 'Formulário não encontrado.' });
+    
+    res.json(form);
+  } catch (err) {
+    console.error('Erro ao publicar formulário:', err);
+    res.status(500).json({ error: 'Erro ao publicar o formulário.' });
+  }
+});
+
 module.exports = router;

@@ -28,9 +28,10 @@ module.exports = (req, res, next) => {
             return res.status(401).json({ error: 'Token inválido ou expirado.' });
         }
 
-        // Importante: Guarda o ID do utilizador no objeto da requisição
-        // Assim, as próximas funções sabem quem está a fazer o pedido
+        // Importante: Guarda o ID e o Cargo do utilizador no objeto da requisição
+        // Assim, as próximas funções sabem quem está a fazer o pedido e que permissões tem
         req.userId = decoded.id;
+        req.userRole = decoded.role;
         
         return next(); // Passa para a próxima função/rota
     });
