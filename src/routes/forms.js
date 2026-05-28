@@ -28,11 +28,12 @@ router.get('/:id', async (req, res) => {
 // Criar um novo formulário
 router.post('/', auth, async (req, res) => {
   try {
-    const { titulo, descricao, estado, campos, corPrincipal, logo } = req.body;
+    const { titulo, descricao, categoria, estado, campos, corPrincipal, logo } = req.body;
     
     const newForm = await Form.create({
       titulo,
       descricao,
+      categoria: categoria || 'Sem categoria',
       estado,
       campos,
       corPrincipal,
@@ -58,6 +59,7 @@ router.post('/:id/clonar', auth, async (req, res) => {
     const novoForm = new Form({
       titulo: `${formOriginal.titulo} (Cópia)`,
       descricao: formOriginal.descricao,
+      categoria: formOriginal.categoria || 'Sem categoria',
       estado: 'Rascunho',
       campos: formOriginal.campos,
       corPrincipal: formOriginal.corPrincipal,
@@ -83,11 +85,11 @@ router.put('/:id', auth, async (req, res) => {
     if (formAtual.estado === 'Publicado' || formAtual.estado === 'Arquivado') {
       return res.status(403).json({ error: 'Não é possível editar formulários publicados ou arquivados.' });
     }
-    const { titulo, descricao, estado, campos, corPrincipal, logo } = req.body;
+    const { titulo, descricao, categoria, estado, campos, corPrincipal, logo } = req.body;
 
     const form = await Form.findByIdAndUpdate(
       req.params.id,
-      { titulo, descricao, estado, campos, corPrincipal, logo },
+      { titulo, descricao, categoria: categoria || 'Sem categoria', estado, campos, corPrincipal, logo },
       { new: true }
     );
 

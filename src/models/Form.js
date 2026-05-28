@@ -9,6 +9,7 @@ const CampoSchema = new mongoose.Schema({
 const FormSchema = new mongoose.Schema({
   titulo: { type: String, required: true },
   descricao: { type: String },
+  categoria: { type: String, trim: true, default: 'Sem categoria' },
   estado: { type: String, enum: ['Rascunho', 'Publicado','Arquivado'], default: 'Rascunho' },
   campos: [CampoSchema],
   corPrincipal: { type: String, default: '#282c34' },
