@@ -3,7 +3,10 @@ const mongoose = require('mongoose');
 const CampoSchema = new mongoose.Schema({
   etiqueta: { type: String, required: true },
   tipo: { type: String, required: true },
-  obrigatorio: { type: Boolean, default: false }
+  obrigatorio: { type: Boolean, default: false },
+  x: { type: Number, default: 1 },
+  y: { type: Number, default: 1 },
+  w: { type: Number, default: 12 }
 });
 
 const FormSchema = new mongoose.Schema({
