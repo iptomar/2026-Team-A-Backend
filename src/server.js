@@ -7,6 +7,7 @@ const formRoutes = require('./routes/forms');
 const formularioRoutes = require('./routes/formularios');
 const settingsRoutes = require('./routes/settings');
 const submissaoRoutes = require('./routes/submissoes');
+const salaRoutes = require('./routes/salas');
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use("/api/forms", formRoutes);
 app.use("/api/formularios", formularioRoutes);
 app.use("/api/submissoes", submissaoRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/salas', salaRoutes);
 
 app.get("/", (req, res) => {
   res.send("Backend Online - 2026 Team A com MongoDB");
