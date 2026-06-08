@@ -24,6 +24,9 @@ const SubmissaoSchema = new mongoose.Schema({
     enum: ['Pendente', 'Aprovado', 'Rejeitado'],
     default: 'Pendente'
   },
+  justificacaoRejeicao: {
+    type: String
+  },
   dataSubmissao: {
     type: Date,
     default: Date.now

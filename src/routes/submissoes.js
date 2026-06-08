@@ -76,4 +76,35 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
+// Atualizar estado de uma submissão (Decisão do Coordenador)
+router.patch('/:id/decisao', auth, async (req, res) => {
+  try {
+    const { estado, justificacaoRejeicao } = req.body;
+    
+    if (!['Aprovado', 'Rejeitado'].includes(estado)) {
+      return res.status(400).json({ error: 'Estado inválido. Deve ser Aprovado ou Rejeitado.' });
+    }
+
+    const updateData = { estado };
+    if (estado === 'Rejeitado') {
+      updateData.justificacaoRejeicao = justificacaoRejeicao || '';
+    }
+
+    const submissao = await Submissao.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+
+    if (!submissao) {
+      return res.status(404).json({ error: 'Submissão não encontrada.' });
+    }
+
+    res.json(submissao);
+  } catch (error) {
+    console.error('Erro ao atualizar decisão:', error);
+    res.status(500).json({ error: 'Erro ao registar a decisão.' });
+  }
+});
+
 module.exports = router;
