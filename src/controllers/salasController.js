@@ -48,6 +48,14 @@ exports.seedSalas = async (req, res) => {
       lotacao: 120,
       equipamentos: { projetor: true, tomadas: true }
     },
+    { 
+      nome: 'D005', 
+      bloco: 'D', 
+      piso: '0', 
+      tipo: 'Laboratório de Eletrónica', 
+      lotacao: 20,
+      equipamentos: { projetor: false, tomadas: true }
+    },
   ];
 
   try {
