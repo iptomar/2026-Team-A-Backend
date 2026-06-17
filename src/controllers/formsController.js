@@ -3,9 +3,26 @@ const Submissao = require('../models/Submissao');
 
 exports.listAll = async (req, res) => {
   try {
-    const forms = await Form.find().sort({ criadoEm: -1 });
-    res.json(forms);
+    const forms = await Form.find().sort({ criadoEm: -1 }).lean();
+    
+    // Enrich each form with submission statistics
+    const enrichedForms = await Promise.all(forms.map(async (form) => {
+      const totalSubmissoes = await Submissao.countDocuments({ formulario: form._id });
+      const submissoesPendentes = await Submissao.countDocuments({ 
+        formulario: form._id, 
+        estado: 'Pendente' 
+      });
+      
+      return {
+        ...form,
+        totalSubmissoes,
+        submissoesPendentes
+      };
+    }));
+
+    res.json(enrichedForms);
   } catch (err) {
+    console.error('Erro ao listar formulários:', err);
     res.status(500).json({ error: 'Erro ao carregar formulários.' });
   }
 };
