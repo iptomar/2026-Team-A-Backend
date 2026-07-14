@@ -4,8 +4,37 @@ const Form = require('../models/Form');
 
 exports.create = async (req, res) => {
   try {
-    const { formularioId, tituloFormulario, respostas } = req.body;
+    const { formularioId, respostas } = req.body;
 
+    // Procura o formulário para extrair as regras de validação
+    const form = await Form.findById(formularioId);
+    if (!form) return res.status(404).json({ error: 'Formulário não encontrado.' });
+
+    // Validação de segurança no lado do servidor
+    for (const campo of form.campos) {
+      const valor = respostas[campo._id.toString()] || '';
+
+      if (valor.trim() !== '') {
+        // Validação de limites numéricos
+        if (campo.tipo === 'Número') {
+          const numVal = Number(valor);
+          if (campo.minNumero !== undefined && numVal < campo.minNumero) {
+            return res.status(400).json({ error: `O valor do campo "${campo.etiqueta}" deve ser no mínimo ${campo.minNumero}.` });
+          }
+          if (campo.maxNumero !== undefined && numVal > campo.maxNumero) {
+            return res.status(400).json({ error: `O valor do campo "${campo.etiqueta}" deve ser no máximo ${campo.maxNumero}.` });
+          }
+        }
+        // Validação de comprimento máximo de caracteres
+        if (['Texto Curto', 'Texto Longo', 'Nome', 'Email'].includes(campo.tipo) && campo.maxCaracteres) {
+          if (valor.length > campo.maxCaracteres) {
+            return res.status(400).json({ error: `O campo "${campo.etiqueta}" excede o limite máximo de ${campo.maxCaracteres} caracteres.` });
+          }
+        }
+      }
+    }
+
+    const { tituloFormulario } = req.body;
     const novaSubmissao = await Submissao.create({
       formulario: formularioId,
       professor: req.userId,
