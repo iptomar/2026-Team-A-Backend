@@ -39,7 +39,7 @@ exports.getById = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { titulo, descricao, categoria, estado, campos, corPrincipal, logo } = req.body;
+    const { titulo, descricao, categoria, estado, campos, corPrincipal, logo, codigoDocumento } = req.body;
     
     const newForm = await Form.create({
       titulo,
@@ -49,6 +49,7 @@ exports.create = async (req, res) => {
       campos,
       corPrincipal,
       logo,
+      codigoDocumento,
       criadoPor: req.userId
     });
     
@@ -73,6 +74,7 @@ exports.clone = async (req, res) => {
       campos: formOriginal.campos,
       corPrincipal: formOriginal.corPrincipal,
       logo: formOriginal.logo,
+      codigoDocumento: formOriginal.codigoDocumento,
       criadoPor: req.userId
     });
 
@@ -92,11 +94,11 @@ exports.update = async (req, res) => {
     if (formAtual.estado === 'Publicado' || formAtual.estado === 'Arquivado') {
       return res.status(403).json({ error: 'Não é possível editar formulários publicados ou arquivados.' });
     }
-    const { titulo, descricao, categoria, estado, campos, corPrincipal, logo } = req.body;
+    const { titulo, descricao, categoria, estado, campos, corPrincipal, logo, codigoDocumento } = req.body;
 
     const form = await Form.findByIdAndUpdate(
       req.params.id,
-      { titulo, descricao, categoria: categoria || 'Sem categoria', estado, campos, corPrincipal, logo },
+      { titulo, descricao, categoria: categoria || 'Sem categoria', estado, campos, corPrincipal, logo, codigoDocumento },
       { new: true }
     );
 

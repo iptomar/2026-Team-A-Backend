@@ -17,6 +17,7 @@ const FormSchema = new mongoose.Schema({
   campos: [CampoSchema],
   corPrincipal: { type: String, default: '#282c34' },
   logo: { type: String }, // Store as Base64 string for simplicity in this task
+  codigoDocumento: { type: String, default: 'PT.SIGQ.MOD ACA 30 60 - 3' },
   criadoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   criadoEm: { type: Date, default: Date.now }
 });
