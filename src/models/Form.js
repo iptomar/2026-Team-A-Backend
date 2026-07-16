@@ -6,14 +6,17 @@ const CampoSchema = new mongoose.Schema({
   obrigatorio: { type: Boolean, default: false },
   x: { type: Number, default: 1 },
   y: { type: Number, default: 1 },
-  w: { type: Number, default: 12 }
+  w: { type: Number, default: 12 },
+  maxCaracteres: { type: Number }, // Tamanho máximo de caracteres para texto
+  minNumero: { type: Number },     // Valor mínimo permitido para números
+  maxNumero: { type: Number }      // Valor máximo permitido para números
 });
 
 const FormSchema = new mongoose.Schema({
   titulo: { type: String, required: true },
   descricao: { type: String },
   categoria: { type: String, trim: true, default: 'Sem categoria' },
-  estado: { type: String, enum: ['Rascunho', 'Publicado','Arquivado'], default: 'Rascunho' },
+  estado: { type: String, enum: ['Rascunho', 'Publicado', 'Arquivado'], default: 'Rascunho' },
   campos: [CampoSchema],
   corPrincipal: { type: String, default: '#282c34' },
   logo: { type: String }, // Store as Base64 string for simplicity in this task
