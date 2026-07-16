@@ -3,16 +3,48 @@ const Submissao = require('../models/Submissao');
 
 exports.listAll = async (req, res) => {
   try {
-    const forms = await Form.find().sort({ criadoEm: -1 }).lean();
-    
-    // Enrich each form with submission statistics
+    const { userId, userRole } = req;
+    let query = { estado: 'Publicado' };
+
+    // Se for utilizador autenticado normal (aluno ou professor), filtramos a visibilidade
+    if (userId && userRole !== 'admin' && userRole !== 'coordenador' && userRole !== 'diretor') {
+      const user = await require('../models/User').findById(userId);
+
+      if (userRole === 'aluno') {
+        query.publicoAlvo = { $in: ['Todos', 'Alunos'] };
+        if (user && user.curso) {
+          query.$or = [
+            { cursosDestinatarios: user.curso },
+            { cursosDestinatarios: { $size: 0 } }
+          ];
+        }
+      } else if (userRole === 'professor') {
+        query.publicoAlvo = { $in: ['Todos', 'Docentes'] };
+      }
+    } else if (userRole === 'admin' || userRole === 'coordenador') {
+      // Admin e Coordenador vêem todos os formulários estruturais
+      delete query.estado;
+    } else if (userRole === 'diretor') {
+      // Diretor de curso vê formulários do seu próprio curso
+      const user = await require('../models/User').findById(userId);
+      if (user && user.curso) {
+        query.$or = [
+          { cursosDestinatarios: user.curso },
+          { cursosDestinatarios: { $size: 0 } }
+        ];
+      }
+    }
+
+    const forms = await Form.find(query).sort({ criadoEm: -1 }).lean();
+
+    // Estatísticas de submissão
     const enrichedForms = await Promise.all(forms.map(async (form) => {
       const totalSubmissoes = await Submissao.countDocuments({ formulario: form._id });
-      const submissoesPendentes = await Submissao.countDocuments({ 
-        formulario: form._id, 
-        estado: 'Pendente' 
+      const submissoesPendentes = await Submissao.countDocuments({
+        formulario: form._id,
+        estado: 'Pendente'
       });
-      
+
       return {
         ...form,
         totalSubmissoes,
@@ -40,7 +72,7 @@ exports.getById = async (req, res) => {
 exports.create = async (req, res) => {
   try {
     const { titulo, descricao, categoria, estado, campos, corPrincipal, logo, codigoDocumento } = req.body;
-    
+
     const newForm = await Form.create({
       titulo,
       descricao,
@@ -52,7 +84,7 @@ exports.create = async (req, res) => {
       codigoDocumento,
       criadoPor: req.userId
     });
-    
+
     res.status(201).json(newForm);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao criar o formulário.' });
@@ -112,14 +144,14 @@ exports.update = async (req, res) => {
 
 exports.delete = async (req, res) => {
   try {
-    const submissoesPendentes = await Submissao.countDocuments({ 
-      formulario: req.params.id, 
-      estado: 'Pendente' 
+    const submissoesPendentes = await Submissao.countDocuments({
+      formulario: req.params.id,
+      estado: 'Pendente'
     });
 
     if (submissoesPendentes > 0) {
-      return res.status(400).json({ 
-        error: `Não é possível apagar este formulário porque existem ${submissoesPendentes} pedido(s) pendente(s).` 
+      return res.status(400).json({
+        error: `Não é possível apagar este formulário porque existem ${submissoesPendentes} pedido(s) pendente(s).`
       });
     }
 
@@ -159,7 +191,7 @@ exports.unpublish = async (req, res) => {
     );
 
     if (!form) return res.status(404).json({ error: 'Formulário não encontrado.' });
-    
+
     res.json(form);
   } catch (err) {
     console.error('Erro ao despublicar formulário:', err);
@@ -180,7 +212,7 @@ exports.publish = async (req, res) => {
     );
 
     if (!form) return res.status(404).json({ error: 'Formulário não encontrado.' });
-    
+
     res.json(form);
   } catch (err) {
     console.error('Erro ao publicar formulário:', err);

@@ -19,10 +19,13 @@ const FormSchema = new mongoose.Schema({
   estado: { type: String, enum: ['Rascunho', 'Publicado', 'Arquivado'], default: 'Rascunho' },
   campos: [CampoSchema],
   corPrincipal: { type: String, default: '#282c34' },
-  logo: { type: String }, // Store as Base64 string for simplicity in this task
+  logo: { type: String },
   codigoDocumento: { type: String, default: 'PT.SIGQ.MOD ACA 30 60 - 3' },
   criadoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  criadoEm: { type: Date, default: Date.now }
+  criadoEm: { type: Date, default: Date.now },
+  publicoAlvo: { type: String, enum: ['Todos', 'Docentes', 'Alunos'], default: 'Todos' },
+  cursosDestinatarios: [{ type: String }]
 });
+
 
 module.exports = mongoose.model('Form', FormSchema);

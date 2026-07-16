@@ -4,7 +4,7 @@ const User = require('../models/User');
 
 exports.register = async (req, res) => {
     try {
-        const { email, password, role } = req.body;
+        const { email, password, role, curso } = req.body;
 
         const userExists = await User.findOne({ email });
         if (userExists) {
@@ -12,13 +12,15 @@ exports.register = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 8);
-        
-        const newUser = await User.create({ 
-            email, 
+
+        const newUser = await User.create({
+            email,
             password: hashedPassword,
-            role: role || 'professor' 
+            role: role || 'professor',
+            // Associa o curso apenas para alunos, professores ou diretores
+            curso: (role === 'aluno' || role === 'professor' || role === 'diretor') ? curso : null
         });
-        
+
         res.status(201).json({ message: 'Utilizador criado com sucesso!', id: newUser._id });
     } catch (err) {
         res.status(500).json({ error: 'Erro ao registar o utilizador.' });
@@ -28,25 +30,26 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        
+
         const user = await User.findOne({ email });
-        
+
         if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.status(401).json({ error: 'E-mail ou palavra-passe incorretos.' });
         }
 
         const token = jwt.sign(
-            { id: user._id, role: user.role }, 
-            process.env.JWT_SECRET, 
+            { id: user._id, role: user.role },
+            process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
 
-        res.json({ 
-            user: { 
-                email: user.email, 
-                role: user.role 
-            }, 
-            token 
+        res.json({
+            user: {
+                email: user.email,
+                role: user.role,
+                curso: user.curso
+            },
+            token
         });
     } catch (err) {
         res.status(500).json({ error: 'Erro interno no servidor durante o login.' });

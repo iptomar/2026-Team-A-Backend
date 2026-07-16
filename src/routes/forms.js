@@ -3,7 +3,7 @@ const router = express.Router();
 const formsController = require('../controllers/formsController');
 const auth = require('../middlewares/auth');
 
-router.get('/', formsController.listAll);
+router.get('/', auth, formsController.listAll);
 router.get('/:id', formsController.getById);
 router.post('/', auth, formsController.create);
 router.post('/:id/clonar', auth, formsController.clone);

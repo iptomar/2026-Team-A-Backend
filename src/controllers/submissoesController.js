@@ -62,8 +62,30 @@ exports.listMySubmissions = async (req, res) => {
 
 exports.listAll = async (req, res) => {
   try {
-    const pedidos = await Submissao.find()
-      .populate('professor', 'email')
+    const user = await User.findById(req.userId);
+    let query = {};
+
+    // Se for diretor de curso, restringe aos utilizadores ou formulários do seu curso
+    if (req.userRole === 'diretor' && user && user.curso) {
+      const usersDoMesmoCurso = await User.find({ curso: user.curso }).select('_id');
+      const userIds = usersDoMesmoCurso.map(u => u._id);
+
+      const formsDoCurso = await Form.find({ cursosDestinatarios: user.curso }).select('_id');
+      const formIds = formsDoCurso.map(f => f._id);
+
+      query = {
+        $or: [
+          { professor: { $in: userIds } },
+          { formulario: { $in: formIds } }
+        ]
+      };
+    } else if (req.userRole !== 'admin' && req.userRole !== 'coordenador') {
+      return res.status(403).json({ error: 'Acesso negado. Perfil de coordenação incorreto.' });
+    }
+
+    const pedidos = await Submissao.find(query)
+      .populate('professor', 'email curso')
+      .populate('formulario')
       .sort({ dataSubmissao: 1 });
     res.json(pedidos);
   } catch (error) {
@@ -76,10 +98,30 @@ exports.listAll = async (req, res) => {
 
 exports.getStats = async (req, res) => {
   try {
-    const total = await Submissao.countDocuments();
-    const pendentes = await Submissao.countDocuments({ estado: 'Pendente' });
-    const aprovados = await Submissao.countDocuments({ estado: 'Aprovado' });
-    const rejeitados = await Submissao.countDocuments({ estado: 'Rejeitado' });
+    const user = await User.findById(req.userId);
+    let query = {};
+
+    if (req.userRole === 'diretor' && user && user.curso) {
+      const usersDoMesmoCurso = await User.find({ curso: user.curso }).select('_id');
+      const userIds = usersDoMesmoCurso.map(u => u._id);
+
+      const formsDoCurso = await Form.find({ cursosDestinatarios: user.curso }).select('_id');
+      const formIds = formsDoCurso.map(f => f._id);
+
+      query = {
+        $or: [
+          { professor: { $in: userIds } },
+          { formulario: { $in: formIds } }
+        ]
+      };
+    } else if (req.userRole !== 'admin' && req.userRole !== 'coordenador') {
+      return res.status(403).json({ error: 'Acesso negado.' });
+    }
+
+    const total = await Submissao.countDocuments(query);
+    const pendentes = await Submissao.countDocuments({ ...query, estado: 'Pendente' });
+    const aprovados = await Submissao.countDocuments({ ...query, estado: 'Aprovado' });
+    const rejeitados = await Submissao.countDocuments({ ...query, estado: 'Rejeitado' });
 
     const taxaAprovacao = total > 0 ? ((aprovados / (aprovados + rejeitados || 1)) * 100).toFixed(1) : 0;
 
@@ -167,16 +209,35 @@ exports.getById = async (req, res) => {
 
 exports.updateStatus = async (req, res) => {
   try {
-    // Extrai o estado e a justificação enviados no corpo do pedido HTTP
     const { estado, justificacao } = req.body;
 
     if (!['Aprovado', 'Rejeitado', 'Pendente'].includes(estado)) {
       return res.status(400).json({ error: 'Estado inválido.' });
     }
 
-    // Se o pedido for rejeitado, a justificação é obrigatória
     if (estado === 'Rejeitado' && (!justificacao || !justificacao.trim())) {
       return res.status(400).json({ error: 'A justificação é obrigatória para rejeitar um pedido.' });
+    }
+
+    // Se for diretor de curso, valida se o pedido pertence a um docente/aluno do curso ou a um formulário do curso
+    if (req.userRole === 'diretor') {
+      const user = await User.findById(req.userId);
+      const submissaoObj = await Submissao.findById(req.params.id)
+        .populate('professor')
+        .populate('formulario');
+
+      if (!submissaoObj) {
+        return res.status(404).json({ error: 'Pedido não encontrado.' });
+      }
+
+      const professorDoMesmoCurso = submissaoObj.professor?.curso === user?.curso;
+      const formularioDoMesmoCurso = submissaoObj.formulario?.cursosDestinatarios?.includes(user?.curso);
+
+      if (!professorDoMesmoCurso && !formularioDoMesmoCurso) {
+        return res.status(403).json({ error: 'Acesso negado. Apenas pode decidir sobre pedidos do seu próprio curso.' });
+      }
+    } else if (req.userRole !== 'admin' && req.userRole !== 'coordenador') {
+      return res.status(403).json({ error: 'Acesso negado.' });
     }
 
     const submissao = await Submissao.findByIdAndUpdate(
